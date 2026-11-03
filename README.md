@@ -9,6 +9,13 @@ Install with `installer\YugiohVintedLister-Setup.exe`. It needs no admin rights 
 The app keeps its data in `%APPDATA%\YugiohVintedLister`. By default photos are copied into `Pictures\Yugioh cards`; change this under **Photos folder**.
 To rebuild after code changes, run `powershell -File build.ps1`.
 
+## Publishing an update
+```
+powershell -File release.ps1 1.1.0
+```
+This bumps `version.py`, commits, tags `v1.1.0` and pushes. GitHub Actions builds the installer and publishes a release, which takes about 3 minutes.
+Installed apps check GitHub at startup and every 6 hours. They show an **Update available** banner, and **Update & restart** installs the new version silently and reopens the app. Your data in `%APPDATA%` is kept.
+
 ## Command line
 
 ## One-time setup
