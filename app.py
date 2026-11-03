@@ -163,8 +163,15 @@ class Api:
             time.sleep(6 * 3600)
 
     def check_update(self) -> dict:
-        self._update = updater.check()
-        return self._update
+        """Manual 'Check for updates' button."""
+        info = updater.check()
+        if not info.get("error") or not self._update.get("available"):
+            self._update = info  # don't hide a known update just because this check failed
+        if info.get("available"):
+            self._log.add(f"Update available: v{info['latest']} (you have v{__version__}).")
+        elif not info.get("error"):
+            self._log.add(f"Checked for updates: v{__version__} is the latest.")
+        return info
 
     def install_update(self) -> str:
         info = self._update

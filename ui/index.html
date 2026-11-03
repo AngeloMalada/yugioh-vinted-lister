@@ -315,6 +315,14 @@
   .update .bar { width: 160px; height: 6px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
   .update .bar i { display: block; height: 100%; background: var(--gold); width: 0; transition: width .2s; }
   .ver { color: var(--faint); font-size: 11.5px; margin-left: 6px; }
+  .link {
+    background: none; border: 0; padding: 0 0 0 8px; margin-left: 6px; border-left: 1px solid var(--border-strong);
+    color: var(--muted); font-size: 11.5px; cursor: pointer;
+  }
+  .link:hover { color: var(--gold-strong); }
+  .link:disabled { cursor: default; color: var(--faint); }
+  .link:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 3px; }
+  .toast.warn svg { color: var(--warn); }
 
   /* ---------- toasts ---------- */
   .toasts { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: grid; gap: 8px; z-index: 60; }
@@ -334,7 +342,7 @@
       <div class="brand-mark" aria-hidden="true"></div>
       <div>
         <h1>Vinted Card Lister</h1>
-        <p>Yu-Gi-Oh! photos → Vinted drafts<span class="ver" id="ver"></span></p>
+        <p>Yu-Gi-Oh! photos → Vinted drafts<span class="ver" id="ver"></span><button class="link" id="checkUpd" type="button">Check for updates</button></p>
       </div>
     </div>
     <div class="spacer"></div>
@@ -806,12 +814,23 @@ $("#updBtn").onclick = async () => {
   const r = await api.install_update();
   if (r !== "ok") toast(r);
 };
+$("#checkUpd").onclick = async () => {
+  const b = $("#checkUpd");
+  b.disabled = true; b.textContent = "Checking…";
+  try {
+    const u = await api.check_update();
+    if (u.available) toast(`Version ${u.latest} is available`);
+    else if (u.error) toast("Couldn't reach GitHub - check your internet and try again", "warn");
+    else toast(`You're up to date (v${u.current})`);
+    refresh();
+  } finally { b.disabled = false; b.textContent = "Check for updates"; }
+};
 $("#updNotes").onclick = e => { e.preventDefault(); const u = e.currentTarget.dataset.url; if (u) api.open_url(u); };
 
 // ---------- toasts ----------
-function toast(msg) {
+function toast(msg, kind) {
   const t = document.createElement("div");
-  t.className = "toast"; t.innerHTML = `${ICON.check}<span>${esc(msg)}</span>`;
+  t.className = "toast" + (kind ? " " + kind : ""); t.innerHTML = `${ICON.check}<span>${esc(msg)}</span>`;
   $("#toasts").append(t);
   setTimeout(() => { t.style.transition = "opacity .3s"; t.style.opacity = "0"; setTimeout(() => t.remove(), 300); }, 2200);
 }
