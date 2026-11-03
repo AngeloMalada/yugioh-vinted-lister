@@ -1,0 +1,16 @@
+# environment / build output
+.venv/
+__pycache__/
+build/
+dist/
+installer/
+*.spec
+
+# personal data - never commit
+cards/
+names.csv
+names.old.csv
+done.json
+settings.json
+cards_db*.json
+.upload_cache/

@@ -1,0 +1,8 @@
+playwright
+rapidocr
+onnxruntime
+rapidfuzz
+requests
+pillow
+pillow-heif
+pywebview
