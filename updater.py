@@ -68,10 +68,14 @@ def download(url: str, progress=None) -> Path:
 def install_and_restart(setup: Path) -> None:
     """Run the installer silently once this app has exited, then start the new version."""
     exe = Path(sys.executable)
-    cmd = (
-        f'timeout /t 2 /nobreak >nul & '
-        f'"{setup}" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS & '
-        f'start "" "{exe}"'
+    script = Path(tempfile.gettempdir()) / "YugiohVintedLister-update.cmd"
+    script.write_text(
+        "@echo off\r\n"
+        "ping -n 3 127.0.0.1 >nul\r\n"  # give the app a moment to exit
+        f'start "" /wait "{setup}" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS\r\n'
+        f'start "" "{exe}"\r\n',
+        encoding="mbcs",  # cmd.exe reads the ANSI code page
     )
-    flags = 0x00000008 | 0x00000200 | 0x08000000  # DETACHED_PROCESS | NEW_PROCESS_GROUP | NO_WINDOW
-    subprocess.Popen(["cmd", "/c", cmd], creationflags=flags, close_fds=True, cwd=os.environ.get("TEMP", None))
+    flags = 0x00000200 | 0x08000000  # CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW (survives our exit, no console flash)
+    subprocess.Popen(["cmd", "/c", str(script)], creationflags=flags, close_fds=True,
+                     cwd=tempfile.gettempdir())
