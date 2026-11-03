@@ -13,7 +13,7 @@ To rebuild after code changes, run `powershell -File build.ps1`.
 ```
 powershell -File release.ps1 1.1.0
 ```
-This bumps `version.py`, commits, tags `v1.1.0` and pushes. GitHub Actions builds the installer and publishes a release, which takes about 3 minutes.
+This creates and pushes the branch `release/1.1.0` from your current commit. You can also create that branch yourself on GitHub. Creating a `release/<version>` branch is the only thing that triggers a build. GitHub Actions builds the installer and publishes release `v1.1.0`, which takes about 3 minutes. Pushing to `main` or other branches never builds. Later pushes to an existing release branch don't rebuild either: release the fix as the next version, for example `release/1.1.1`.
 Installed apps check GitHub at startup and every 6 hours. They show an **Update available** banner, and **Update & restart** installs the new version silently and reopens the app. Your data in `%APPDATA%` is kept.
 
 ## Command line

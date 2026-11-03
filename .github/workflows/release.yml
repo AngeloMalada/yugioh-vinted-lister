@@ -1,25 +1,35 @@
 name: Build & release
 
-# Push a tag like v1.2.0 (release.ps1 does this) -> builds the Windows installer and publishes a GitHub Release.
-# Installed apps see the new release and offer "Update & restart".
+# Runs only when a branch named release/<version> is created, e.g. release/1.2.0
+# (release.ps1 does this). Builds the Windows installer and publishes GitHub Release v1.2.0;
+# installed apps then offer "Update & restart".
 on:
-  push:
-    tags: ["v*"]
+  create:
 
 permissions:
   contents: write
 
 jobs:
   build:
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'release/')
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check tag matches version.py
+      - name: Read version from branch name
+        id: ver
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          $v = (Select-String -Path version.py -Pattern '__version__ = "(.+)"').Matches[0].Groups[1].Value
-          if ("v$v" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} != version.py v$v" }
+          $v = "${{ github.ref_name }}".Substring("release/".Length).TrimStart("v")
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "Branch must be release/<major.minor.patch>, e.g. release/1.2.0 (got '${{ github.ref_name }}')" }
+          gh release view "v$v" --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) { throw "v$v is already released - create release/<next version> instead" }
+          $global:LASTEXITCODE = 0
+          (Get-Content version.py) -replace '__version__ = ".*"', "__version__ = `"$v`"" | Set-Content version.py
+          "version=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Building v$v"
 
       - uses: actions/setup-python@v5
         with:
@@ -45,4 +55,6 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" installer\YugiohVintedLister-Setup.exe --title "${{ github.ref_name }}" --generate-notes
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          gh release create "v$v" installer\YugiohVintedLister-Setup.exe --target "${{ github.sha }}" --title "v$v" --generate-notes
