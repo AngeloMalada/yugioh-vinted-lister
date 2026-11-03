@@ -62,6 +62,10 @@ def download(url: str, progress=None) -> Path:
                 done += len(chunk)
                 if progress and total:
                     progress(done / total)
+    try:  # drop any "downloaded from the internet" mark so SmartScreen doesn't block the silent install
+        os.remove(str(dest) + ":Zone.Identifier")
+    except OSError:
+        pass
     return dest
 
 
